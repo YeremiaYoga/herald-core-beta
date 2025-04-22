@@ -347,7 +347,6 @@ async function heraldCore_renderManagePartyMiddleContainer() {
   }
 }
 
-async function heraldCore_managePartyDelete() {}
 async function heraldCore_rendermanagePartyBottomContainer() {
   let dialogBottom = document.getElementById(
     "heraldCore-managePartyBottomContainer"
