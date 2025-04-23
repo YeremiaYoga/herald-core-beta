@@ -85,12 +85,12 @@ async function heraldCore_showDialogCore() {
         scale: 1.0,
       });
     }
-    await heraldCore_renderDialogCoreMiddle(heraldCore_switchList, "");
+    await heraldCore_renderDialogCoreMiddle(heraldCore_switchList);
     await heraldCore_renderDialogCoreBottom();
   });
 }
 
-async function heraldCore_renderDialogCoreMiddle(type, search) {
+async function heraldCore_renderDialogCoreMiddle(type) {
   let dialogMiddle = document.getElementById(
     "heraldCore-dialogMiddleContainer"
   );
@@ -152,7 +152,7 @@ async function heraldCore_renderDialogCoreMiddle(type, search) {
             </div>
             <div id="heraldCore-actorRightContainer" class="heraldCore-actorRightContainer">
                 <div id="heraldCore-buttonSelectPartyContainer" class="heraldCore-buttonSelectPartyContainer">
-                    <button id="heraldCore-buttonSelectParty" class="heraldCore-buttonSelectParty" data-uuid="${uuidActor}">Select Party</button>
+                    <button id="heraldCore-buttonSelectParty" class="heraldCore-buttonSelectParty" data-name="${characterName}" data-uuid="${uuidActor}">Select Party</button>
                 </div>
             </div>
         </div>
@@ -167,14 +167,15 @@ async function heraldCore_renderDialogCoreMiddle(type, search) {
     );
     selectParty.forEach((button) => {
       button.addEventListener("click", async (event) => {
+        const name = button.getAttribute("data-name");
         const uuid = button.getAttribute("data-uuid");
-        await heraldCore_showDialogSelectParty(uuid);
+        await heraldCore_showDialogSelectParty(name, uuid);
       });
     });
   }
 }
 
-async function heraldCore_showDialogSelectParty(uuid) {
+async function heraldCore_showDialogSelectParty(name, uuid) {
   let dialogContent = `
   <div id="heraldCore-dialogSelectPartyContainer" class="heraldCore-dialogSelectPartyContainer">
       <div id="heraldCore-selectPartyTopContainer" class="heraldCore-selectPartyTopContainer"></div>
@@ -208,7 +209,7 @@ async function heraldCore_showDialogSelectParty(uuid) {
         scale: 1.0,
       });
     }
-    await heraldCore_renderSelectPartyMiddleContainer(uuid);
+    await heraldCore_renderSelectPartyMiddleContainer(name, uuid);
 
     let saveButton = document.getElementById(
       "heraldCore-buttonSaveSelectParty"
@@ -226,7 +227,7 @@ async function heraldCore_showDialogSelectParty(uuid) {
         const journalEntry = game.journal.get(journalId);
         if (!journalEntry) continue;
         const pagesToDelete = journalEntry.pages
-          .filter((page) => page.name === uuid)
+          .filter((page) => page.name === `${name} | ${uuid}`)
           .map((page) => page.id);
 
         if (pagesToDelete.length > 0) {
@@ -249,7 +250,7 @@ async function heraldCore_showDialogSelectParty(uuid) {
           if (!journalEntry) continue;
 
           const pageData = {
-            name: uuid,
+            name: `${name} | ${uuid}`,
             type: "text",
             text: {
               content: ``,
@@ -266,7 +267,7 @@ async function heraldCore_showDialogSelectParty(uuid) {
   });
 }
 
-async function heraldCore_renderSelectPartyMiddleContainer(uuid) {
+async function heraldCore_renderSelectPartyMiddleContainer(name, uuid) {
   let dialogMiddle = document.getElementById(
     "heraldCore-selectPartyMiddleContainer"
   );
@@ -295,7 +296,7 @@ async function heraldCore_renderSelectPartyMiddleContainer(uuid) {
 
     let isChecked = "";
     for (let page of journal.pages) {
-      if (page.name === uuid) {
+      if (page.name === `${name} | ${uuid}`) {
         isChecked = "checked";
         break;
       }
@@ -428,8 +429,7 @@ async function heraldCore_renderManagePartyMiddleContainer() {
       f.type === "JournalEntry" &&
       f.folder?.id === heraldCoreFolder.id
   );
- 
-  
+
   let inputSearch = document.getElementById(
     "heraldCore-searchManagePartyInput"
   );
