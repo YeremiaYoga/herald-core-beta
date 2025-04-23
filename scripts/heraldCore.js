@@ -140,6 +140,8 @@ async function heraldCore_renderDialogCoreMiddle(type, search) {
   for (let data of filteredListUser) {
     let characterName = data.character.name;
     let playerName = data.user.name;
+    let uuidActor = data.character.uuid;
+
     listActor += `
         <div id="heraldCore-actorContainer" class="heraldCore-actorContainer">
             <div id="heraldCore-actorLeftContainer" class="heraldCore-actorLeftContainer">
@@ -150,7 +152,7 @@ async function heraldCore_renderDialogCoreMiddle(type, search) {
             </div>
             <div id="heraldCore-actorRightContainer" class="heraldCore-actorRightContainer">
                 <div id="heraldCore-buttonSelectPartyContainer" class="heraldCore-buttonSelectPartyContainer">
-                    <button>Select Party</button>
+                    <button id="heraldCore-buttonSelectParty" class="heraldCore-buttonSelectParty" data-uuid="${uuidActor}">Select Party</button>
                 </div>
             </div>
         </div>
@@ -159,6 +161,162 @@ async function heraldCore_renderDialogCoreMiddle(type, search) {
 
   if (dialogMiddle) {
     dialogMiddle.innerHTML = listActor;
+
+    const selectParty = dialogMiddle.querySelectorAll(
+      ".heraldCore-buttonSelectParty"
+    );
+    selectParty.forEach((button) => {
+      button.addEventListener("click", async (event) => {
+        const uuid = button.getAttribute("data-uuid");
+        await heraldCore_showDialogSelectParty(uuid);
+      });
+    });
+  }
+}
+
+async function heraldCore_showDialogSelectParty(uuid) {
+  let dialogContent = `
+  <div id="heraldCore-dialogSelectPartyContainer" class="heraldCore-dialogSelectPartyContainer">
+      <div id="heraldCore-selectPartyTopContainer" class="heraldCore-selectPartyTopContainer"></div>
+      <div id="heraldCore-selectPartyMiddleContainer" class="heraldCore-selectPartyMiddleContainer"></div>
+      <div id="heraldCore-selectPartyBottomContainer" class="heraldCore-selectPartyBottomContainer">
+        <div id="heraldCore-buttonSaveSelectPartyContainer" class="heraldCore-buttonSaveSelectPartyContainer">
+          <button id="heraldCore-buttonSaveSelectParty" class="heraldCore-buttonSaveSelectParty">Save</button>
+        </div>
+      </div>
+  </div>`;
+
+  const dialog = new Dialog({
+    title: `Herald Core : Select Party`,
+    content: dialogContent,
+    buttons: {},
+    default: "add",
+  });
+
+  dialog.render(true);
+
+  Hooks.once("renderDialog", async (app) => {
+    if (app instanceof Dialog && app.title === `Herald Core : Select Party`) {
+      const width = 400;
+      const height = 400;
+
+      app.setPosition({
+        left: (window.innerWidth - width) / 2,
+        top: (window.innerHeight - height) / 2,
+        width: width,
+        height: height,
+        scale: 1.0,
+      });
+    }
+    await heraldCore_renderSelectPartyMiddleContainer(uuid);
+
+    let saveButton = document.getElementById(
+      "heraldCore-buttonSaveSelectParty"
+    );
+
+    saveButton.addEventListener("click", async (event) => {
+      const allCheckboxes = document.querySelectorAll(
+        ".heraldCore-selectPartyCheckbox"
+      );
+      const allJournal = Array.from(allCheckboxes).map((checkbox) =>
+        checkbox.getAttribute("data-id")
+      );
+
+      for (let journalId of allJournal) {
+        const journalEntry = game.journal.get(journalId);
+        if (!journalEntry) continue;
+        const pagesToDelete = journalEntry.pages
+          .filter((page) => page.name === uuid)
+          .map((page) => page.id);
+
+        if (pagesToDelete.length > 0) {
+          await journalEntry.deleteEmbeddedDocuments(
+            "JournalEntryPage",
+            pagesToDelete
+          );
+        }
+      }
+
+      const checkedCheckboxes = document.querySelectorAll(
+        ".heraldCore-selectPartyCheckbox:checked"
+      );
+      const selectedJournal = Array.from(checkedCheckboxes).map((checkbox) =>
+        checkbox.getAttribute("data-id")
+      );
+      if (selectedJournal.length > 0) {
+        for (let journalId of selectedJournal) {
+          let journalEntry = game.journal.get(journalId);
+          if (!journalEntry) continue;
+
+          const pageData = {
+            name: uuid,
+            type: "text",
+            text: {
+              content: ``,
+              format: 1,
+            },
+            ownership: { default: 3 },
+          };
+          await journalEntry.createEmbeddedDocuments("JournalEntryPage", [
+            pageData,
+          ]);
+        }
+      }
+    });
+  });
+}
+
+async function heraldCore_renderSelectPartyMiddleContainer(uuid) {
+  let dialogMiddle = document.getElementById(
+    "heraldCore-selectPartyMiddleContainer"
+  );
+
+  const heraldCoreFolder = game.folders.find(
+    (f) => f.name === "Herald Core" && f.type === "JournalEntry" && !f.folder
+  );
+  if (!heraldCoreFolder) {
+    console.warn("Herald Core folder not found.");
+    return;
+  }
+  const partyFolder = game.folders.find(
+    (f) =>
+      f.name === "Party" &&
+      f.type === "JournalEntry" &&
+      f.folder?.id === heraldCoreFolder.id
+  );
+  const partyJournals = game.journal.filter(
+    (j) => j.folder?.id === partyFolder.id
+  );
+
+  let listSelectParty = ``;
+  for (let journal of partyJournals) {
+    let journalName = journal.name;
+    let description = journal.flags.description || "";
+
+    let isChecked = "";
+    for (let page of journal.pages) {
+      if (page.name === uuid) {
+        isChecked = "checked";
+        break;
+      }
+    }
+    listSelectParty += `
+      <div id="heraldCore-listSelectPartyContainer" class="heraldCore-listSelectPartyContainer">
+        <div id="heraldCore-listSelectPartyLeftContainer" class="heraldCore-listSelectPartyLeftContainer">
+          <div id="heraldCore-selectPartyName" class="heraldCore-selectPartyName">${journalName}</div>
+          <div id="heraldCore-selectPartyDesc" class="heraldCore-selectPartyDesc">${description}</div>
+        </div>
+        <div id="heraldCore-listSelectPartyMiddleContainer" class="heraldCore-listSelectPartyMiddleContainer">
+        </div>
+        <div id="heraldCore-listSelectPartyRightContainer" class="heraldCore-listSelectPartyRightContainer">
+          <input type="checkbox" class="heraldCore-selectPartyCheckbox" data-id="${journal.id}" ${isChecked}/>
+        </div>
+    </div>
+    `;
+  }
+
+  if (dialogMiddle) {
+    dialogMiddle.innerHTML = listSelectParty;
   }
 }
 
@@ -227,7 +385,7 @@ async function heraldCore_showDialogManageParty() {
     </div>`;
 
   const dialog = new Dialog({
-    title: `Herald Core : Manage Pary`,
+    title: `Herald Core : Manage Party`,
     content: dialogContent,
     buttons: {},
     default: "add",
@@ -236,7 +394,7 @@ async function heraldCore_showDialogManageParty() {
   dialog.render(true);
 
   Hooks.once("renderDialog", async (app) => {
-    if (app instanceof Dialog && app.title === `Herald Core : Manage Pary`) {
+    if (app instanceof Dialog && app.title === `Herald Core : Manage Party`) {
       const width = 400;
       const height = 400;
 
@@ -249,7 +407,7 @@ async function heraldCore_showDialogManageParty() {
       });
     }
     await heraldCore_renderManagePartyMiddleContainer();
-    await heraldCore_rendermanagePartyBottomContainer();
+    await heraldCore_renderManagePartyBottomContainer();
   });
 }
 
@@ -270,9 +428,8 @@ async function heraldCore_renderManagePartyMiddleContainer() {
       f.type === "JournalEntry" &&
       f.folder?.id === heraldCoreFolder.id
   );
-  const partyJournals = game.journal.filter(
-    (j) => j.folder?.id === partyFolder.id
-  );
+ 
+  
   let inputSearch = document.getElementById(
     "heraldCore-searchManagePartyInput"
   );
@@ -318,6 +475,65 @@ async function heraldCore_renderManagePartyMiddleContainer() {
   if (dialogMiddle) {
     dialogMiddle.innerHTML = listParty;
 
+    const editButtons = dialogMiddle.querySelectorAll(
+      ".heraldCore-buttonEditPartyContainer"
+    );
+
+    editButtons.forEach((button, index) => {
+      button.addEventListener("click", async (event) => {
+        const journal = filteredJournal[index];
+        if (!journal) return;
+
+        const currentName = journal.name;
+        const currentDesc = journal.flags.description || "";
+
+        const content = `
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div>
+            <label for="heraldCore-editPartyName"><strong>Party Name</strong></label><br>
+            <input type="text" id="heraldCore-editPartyName" name="heraldCore-editPartyName"
+                   value="${currentName}" style="width: 100%;" placeholder="Enter party name">
+          </div>
+          <div>
+            <label for="heraldCore-editPartyDescription"><strong>Description</strong></label><br>
+            <textarea id="heraldCore-editPartyDescription" name="heraldCore-editPartyDescription"
+            rows="4" style="width: 100%;" placeholder="Enter party description">${currentDesc}</textarea>
+          </div>
+        </div>
+      `;
+
+        new Dialog({
+          title: "Herald Core: Edit Party",
+          content: content,
+          buttons: {
+            save: {
+              label: "Save",
+              callback: async (html) => {
+                const name = html
+                  .find('[name="heraldCore-editPartyName"]')
+                  .val();
+                const description = html
+                  .find('[name="heraldCore-editPartyDescription"]')
+                  .val();
+
+                await journal.update({
+                  name: name,
+                  [`flags.description`]: description,
+                });
+
+                ui.notifications.info("Party journal updated.");
+                await heraldCore_renderManagePartyMiddleContainer();
+              },
+            },
+            cancel: {
+              label: "Cancel",
+            },
+          },
+          default: "save",
+        }).render(true);
+      });
+    });
+
     const deleteButtons = dialogMiddle.querySelectorAll(
       ".heraldCore-buttonDeletePartyContainer"
     );
@@ -347,7 +563,7 @@ async function heraldCore_renderManagePartyMiddleContainer() {
   }
 }
 
-async function heraldCore_rendermanagePartyBottomContainer() {
+async function heraldCore_renderManagePartyBottomContainer() {
   let dialogBottom = document.getElementById(
     "heraldCore-managePartyBottomContainer"
   );
@@ -459,8 +675,6 @@ async function heraldCore_createFolderJournal(name, desc) {
     },
   });
 }
-
-async function heraldCore_createPartyJournal() {}
 
 async function heraldCore_switchListActorDialogCore() {
   let buttonSwitch = document.getElementById(
