@@ -438,7 +438,9 @@ async function heraldCore_renderManagePartyMiddleContainer() {
   if (inputSearch) {
     valueSearch = inputSearch.value.toLowerCase();
   }
-
+  const partyJournals = game.journal.filter(
+    (j) => j.folder?.id === partyFolder.id
+  );
   let filteredJournal = [];
 
   for (let data of partyJournals) {
