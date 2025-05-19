@@ -51,7 +51,7 @@ async function heraldCore_getAllActor() {
     }
   }
 
-  console.log(game.users.contents);
+
 }
 
 async function heraldCore_showDialogCore() {
@@ -109,7 +109,6 @@ async function heraldCore_renderDialogCoreMiddle(type) {
     const allCharacters = game.actors.contents.filter(
       (actor) => actor.type === "character"
     );
-    console.log(allCharacters);
     for (let actor of allCharacters) {
       for (let user of heraldCore_getAllUser) {
         if (actor.ownership[user.id] >= 3) {
@@ -131,13 +130,20 @@ async function heraldCore_renderDialogCoreMiddle(type) {
   let filteredListUser = [];
 
   for (let data of listShowUserCharater) {
-    let characterName = data.character.name.toLowerCase();
-    if (characterName.indexOf(valueSearch) !== -1) {
+    const characterName = data.character?.name?.toLowerCase() || "";
+    const userName = data.user?.name?.toLowerCase() || "";
+    if (
+      characterName.indexOf(valueSearch) !== -1 ||
+      userName.indexOf(valueSearch) !== -1
+    ) {
       filteredListUser.push(data);
     }
   }
 
   for (let data of filteredListUser) {
+    if (!data.character || !data.user) {
+      continue;
+    }
     let characterName = data.character.name;
     let playerName = data.user.name;
     let uuidUser = data.user.uuid;
@@ -182,6 +188,9 @@ async function heraldCore_showDialogSelectParty(userUuid, actorUuid) {
       <div id="heraldCore-selectPartyTopContainer" class="heraldCore-selectPartyTopContainer"></div>
       <div id="heraldCore-selectPartyMiddleContainer" class="heraldCore-selectPartyMiddleContainer"></div>
       <div id="heraldCore-selectPartyBottomContainer" class="heraldCore-selectPartyBottomContainer">
+        <div id="heraldCore-searchSelectPartyContainer" class="heraldCore-searchSelectPartyContainer">
+          <input type="text" id="heraldCore-searchSelectParty" class="heraldCore-searchSelectParty" placeholder="Search Party...">
+        </div>
         <div id="heraldCore-buttonSaveSelectPartyContainer" class="heraldCore-buttonSaveSelectPartyContainer">
           <button id="heraldCore-buttonSaveSelectParty" class="heraldCore-buttonSaveSelectParty">Save</button>
         </div>
@@ -211,6 +220,23 @@ async function heraldCore_showDialogSelectParty(userUuid, actorUuid) {
       });
     }
     await heraldCore_renderSelectPartyMiddleContainer(userUuid, actorUuid);
+
+    let inputSearch = document.getElementById("heraldCore-searchSelectParty");
+
+    let inputSearchTimeOut;
+    inputSearch.addEventListener("input", () => {
+      clearTimeout(inputSearchTimeOut);
+
+      inputSearchTimeOut = setTimeout(async () => {
+        await heraldCore_renderSelectPartyMiddleContainer(userUuid, actorUuid);
+      }, 500);
+    });
+
+    let buttonAddParty = document.getElementById("heraldCore-buttonAddParty");
+
+    buttonAddParty.addEventListener("click", async () => {
+      await heraldCore_showDialogCreateParty();
+    });
 
     let saveButton = document.getElementById(
       "heraldCore-buttonSaveSelectParty"
@@ -268,7 +294,10 @@ async function heraldCore_showDialogSelectParty(userUuid, actorUuid) {
   });
 }
 
-async function heraldCore_renderSelectPartyMiddleContainer(userUuid, actorUuid) {
+async function heraldCore_renderSelectPartyMiddleContainer(
+  userUuid,
+  actorUuid
+) {
   let dialogMiddle = document.getElementById(
     "heraldCore-selectPartyMiddleContainer"
   );
@@ -286,12 +315,26 @@ async function heraldCore_renderSelectPartyMiddleContainer(userUuid, actorUuid) 
       f.type === "JournalEntry" &&
       f.folder?.id === heraldCoreFolder.id
   );
+
+  let inputSearch = document.getElementById("heraldCore-searchSelectParty");
+
+  let valueSearch = "";
+  if (inputSearch) {
+    valueSearch = inputSearch.value.toLowerCase();
+  }
   const partyJournals = game.journal.filter(
     (j) => j.folder?.id === partyFolder.id
   );
+  let filteredJournal = [];
+  for (let data of partyJournals) {
+    let journalName = data.name.toLowerCase();
+    if (journalName.indexOf(valueSearch) !== -1) {
+      filteredJournal.push(data);
+    }
+  }
 
   let listSelectParty = ``;
-  for (let journal of partyJournals) {
+  for (let journal of filteredJournal) {
     let journalName = journal.name;
     let description = journal.flags.description || "";
 
@@ -452,7 +495,6 @@ async function heraldCore_renderManagePartyMiddleContainer() {
   }
   let listParty = ``;
   for (let journal of filteredJournal) {
-    console.log(journal.id);
     let journalName = journal.name;
     let description = journal.flags.description || "";
     listParty += `
