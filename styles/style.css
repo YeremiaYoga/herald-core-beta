@@ -95,6 +95,7 @@
     width: 100%;
     padding: 5px;
     text-align: center;
+    background-color: #fffbf4;
 }
 
 
@@ -102,7 +103,9 @@
    DIALOG MANAGE PARTY
 --------------------------------------------- */
 
-
+.heraldCore-managePartyMiddleContainer{
+    padding-bottom: 70px;
+}
 
 .heraldCore-listPartyContainer {
     border: 1px solid gray;
@@ -136,14 +139,14 @@
     display: flex;
     align-items: center;
     gap: 10px;
-   
+
 }
 
-.heraldCore-buttonEditPartyContainer{
+.heraldCore-buttonEditPartyContainer {
     cursor: pointer;
 }
 
-.heraldCore-buttonDeletePartyContainer{
+.heraldCore-buttonDeletePartyContainer {
     cursor: pointer;
 }
 
@@ -161,10 +164,34 @@
 .heraldCore-managePartyTopDiv {
     margin-bottom: 5px;
 }
+.heraldCore-searchManagePartyContainer {
+    background-color: #d6d2cd;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
 
+.heraldCore-searchManagePartyInput {
+    background-color: #d6d2cd;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    width: 100%;
+    outline: none;
+    font-size: 14px;
+}
+
+.heraldCore-buttonAddParty {
+    background-color: #fffbf4;
+}
 /* ---------------------------------------------
    DIALOG SELECT PARTY
 --------------------------------------------- */
+
+.heraldCore-selectPartyMiddleContainer {
+    padding-bottom: 70px;
+}
 
 .heraldCore-listSelectPartyContainer {
     border: 1px solid gray;
@@ -198,8 +225,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-   
+
 }
+
+
 
 
 .heraldCore-selectPartyBottomContainer {
@@ -211,6 +240,26 @@
     z-index: 14;
 }
 
-.heraldCore-searchSelectPartyContainer{
+.heraldCore-searchSelectPartyContainer {
+    background-color: #d6d2cd;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 10px;
 }
+
+.heraldCore-searchSelectParty {
+    background-color: #d6d2cd;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    width: 100%;
+    outline: none;
+    font-size: 14px;
+}
+
+.heraldCore-buttonSaveSelectParty {
+    background-color: #fffbf4;
+}
+
+
