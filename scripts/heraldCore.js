@@ -50,8 +50,6 @@ async function heraldCore_getAllActor() {
       heraldCore_getAllUser.push(user);
     }
   }
-
-
 }
 
 async function heraldCore_showDialogCore() {
@@ -220,77 +218,84 @@ async function heraldCore_showDialogSelectParty(userUuid, actorUuid) {
       });
     }
     await heraldCore_renderSelectPartyMiddleContainer(userUuid, actorUuid);
+    setTimeout(() => {
+      let inputSearch = document.getElementById("heraldCore-searchSelectParty");
 
-    let inputSearch = document.getElementById("heraldCore-searchSelectParty");
+      let inputSearchTimeOut;
+      inputSearch.addEventListener("input", () => {
+        clearTimeout(inputSearchTimeOut);
 
-    let inputSearchTimeOut;
-    inputSearch.addEventListener("input", () => {
-      clearTimeout(inputSearchTimeOut);
-
-      inputSearchTimeOut = setTimeout(async () => {
-        await heraldCore_renderSelectPartyMiddleContainer(userUuid, actorUuid);
-      }, 500);
-    });
-
-    let buttonAddParty = document.getElementById("heraldCore-buttonAddParty");
-
-    buttonAddParty.addEventListener("click", async () => {
-      await heraldCore_showDialogCreateParty();
-    });
-
-    let saveButton = document.getElementById(
-      "heraldCore-buttonSaveSelectParty"
-    );
-
-    saveButton.addEventListener("click", async (event) => {
-      const allCheckboxes = document.querySelectorAll(
-        ".heraldCore-selectPartyCheckbox"
-      );
-      const allJournal = Array.from(allCheckboxes).map((checkbox) =>
-        checkbox.getAttribute("data-id")
-      );
-
-      for (let journalId of allJournal) {
-        const journalEntry = game.journal.get(journalId);
-        if (!journalEntry) continue;
-        const pagesToDelete = journalEntry.pages
-          .filter((page) => page.name === `${userUuid} | ${actorUuid}`)
-          .map((page) => page.id);
-
-        if (pagesToDelete.length > 0) {
-          await journalEntry.deleteEmbeddedDocuments(
-            "JournalEntryPage",
-            pagesToDelete
+        inputSearchTimeOut = setTimeout(async () => {
+          await heraldCore_renderSelectPartyMiddleContainer(
+            userUuid,
+            actorUuid
           );
-        }
+        }, 500);
+      });
+
+      let buttonAddParty = document.getElementById("heraldCore-buttonAddParty");
+      if (buttonAddParty) {
+        buttonAddParty.addEventListener("click", async () => {
+          await heraldCore_showDialogCreateParty();
+        });
       }
 
-      const checkedCheckboxes = document.querySelectorAll(
-        ".heraldCore-selectPartyCheckbox:checked"
+      let saveButton = document.getElementById(
+        "heraldCore-buttonSaveSelectParty"
       );
-      const selectedJournal = Array.from(checkedCheckboxes).map((checkbox) =>
-        checkbox.getAttribute("data-id")
-      );
-      if (selectedJournal.length > 0) {
-        for (let journalId of selectedJournal) {
-          let journalEntry = game.journal.get(journalId);
+
+      saveButton.addEventListener("click", async (event) => {
+        const allCheckboxes = document.querySelectorAll(
+          ".heraldCore-selectPartyCheckbox"
+        );
+        const allJournal = Array.from(allCheckboxes).map((checkbox) =>
+          checkbox.getAttribute("data-id")
+        );
+
+        for (let journalId of allJournal) {
+          const journalEntry = game.journal.get(journalId);
           if (!journalEntry) continue;
+          const pagesToDelete = journalEntry.pages
+            .filter((page) => page.name === `${userUuid} | ${actorUuid}`)
+            .map((page) => page.id);
 
-          const pageData = {
-            name: `${userUuid} | ${actorUuid}`,
-            type: "text",
-            text: {
-              content: ``,
-              format: 1,
-            },
-            ownership: { default: 3 },
-          };
-          await journalEntry.createEmbeddedDocuments("JournalEntryPage", [
-            pageData,
-          ]);
+          if (pagesToDelete.length > 0) {
+            await journalEntry.deleteEmbeddedDocuments(
+              "JournalEntryPage",
+              pagesToDelete
+            );
+          }
         }
-      }
-    });
+
+        const checkedCheckboxes = document.querySelectorAll(
+          ".heraldCore-selectPartyCheckbox:checked"
+        );
+
+        console.log(checkedCheckboxes);
+        const selectedJournal = Array.from(checkedCheckboxes).map((checkbox) =>
+          checkbox.getAttribute("data-id")
+        );
+        if (selectedJournal.length > 0) {
+          for (let journalId of selectedJournal) {
+            let journalEntry = game.journal.get(journalId);
+            if (!journalEntry) continue;
+
+            const pageData = {
+              name: `${userUuid} | ${actorUuid}`,
+              type: "text",
+              text: {
+                content: ``,
+                format: 1,
+              },
+              ownership: { default: 3 },
+            };
+            await journalEntry.createEmbeddedDocuments("JournalEntryPage", [
+              pageData,
+            ]);
+          }
+        }
+      });
+    }, 500);
   });
 }
 
@@ -642,9 +647,11 @@ async function heraldCore_renderManagePartyBottomContainer() {
     });
 
     let buttonAddParty = document.getElementById("heraldCore-buttonAddParty");
-    buttonAddParty.addEventListener("click", async () => {
-      await heraldCore_showDialogCreateParty();
-    });
+    if (buttonAddParty) {
+      buttonAddParty.addEventListener("click", async () => {
+        await heraldCore_showDialogCreateParty();
+      });
+    }
   }
 }
 
