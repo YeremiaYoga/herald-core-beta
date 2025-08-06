@@ -340,8 +340,9 @@ async function heraldCore_renderSelectPartyMiddleContainer(
 
   let listSelectParty = ``;
   for (let journal of filteredJournal) {
+    console.log(journal);
     let journalName = journal.name;
-    let description = journal.flags.description || "";
+    let description = journal.flags["herald-hud"].description || "";
 
     let isChecked = "";
     for (let page of journal.pages) {
@@ -501,7 +502,7 @@ async function heraldCore_renderManagePartyMiddleContainer() {
   let listParty = ``;
   for (let journal of filteredJournal) {
     let journalName = journal.name;
-    let description = journal.flags.description || "";
+    let description = journal.flags["herald-hud"].description || "";
     listParty += `
         <div id="heraldCore-listPartyContainer" class="heraldCore-listPartyContainer">
             <div id="heraldCore-listPartyLeftContainer" class="heraldCore-listPartyLeftContainer">
@@ -535,7 +536,7 @@ async function heraldCore_renderManagePartyMiddleContainer() {
         if (!journal) return;
 
         const currentName = journal.name;
-        const currentDesc = journal.flags.description || "";
+        const currentDesc = journal.flags["herald-hud"].description || "";
 
         const content = `
         <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -568,7 +569,7 @@ async function heraldCore_renderManagePartyMiddleContainer() {
 
                 await journal.update({
                   name: name,
-                  [`flags.description`]: description,
+                  [`flags.herald-hud.description`]: description,
                 });
 
                 ui.notifications.info("Party journal updated.");
@@ -723,7 +724,9 @@ async function heraldCore_createFolderJournal(name, desc) {
     name: name,
     folder: partyFolder.id,
     flags: {
-      description: desc,
+      "herald-hud": {
+        description: desc,
+      },
     },
   });
 }
